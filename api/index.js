@@ -5,6 +5,7 @@ const { PORT } = require('../config')
 const app = express()
 
 const membership = require('./routes/membership')
+const checkMemberships = require('./cron/ membershipCron')
 
 process.on('unhandledRejection', (err) => {
   console.log(err, 'Unhandled Rejection at Promise')
@@ -24,4 +25,5 @@ app.use('/api/v1', membership)
 
 app.listen(PORT, () => {
   console.log(`Web server is running ${PORT}`)
+  checkMemberships()
 })

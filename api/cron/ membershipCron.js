@@ -1,13 +1,17 @@
-const { Membership, AddOnService, Invoice } = require('../models');
+const { Membership, AddOnService, Invoice } = require('../models/index');
 const nodemailer = require('nodemailer');
 const Sequelize = require('sequelize');
+require('dotenv').config();
+
+const myemail = process.env.SENDER_EMAIL 
+const mypassword = process.env.GOGGLE_PASS_KEY 
 
 // Configure nodemailer with your Gmail SMTP settings
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'your-email@gmail.com',
-        pass: 'your-email-password'
+        user: myemail,
+        pass: mypassword
     }
 });
 
@@ -31,7 +35,7 @@ const checkMemberships = async () => {
 
         // Send email reminder
         const mailOptions = {
-            from: 'your-email@gmail.com',
+            from: myemail,
             to: membership.email,
             subject: `Fitness+ Membership Reminder - ${membership.membershipType}`,
             text: `Dear ${membership.firstName},\n\nThis is a reminder for your upcoming membership payment. The total amount due is $${totalAmount}.\n\nBest regards,\nFitness+ Team`
