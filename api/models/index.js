@@ -1,37 +1,27 @@
-const Sequelize = require("sequelize");
-const config = require("../../config/db");
+const Sequelize = require('sequelize');
+const connection = require('../config/database');
 
-const __models = {
-  Member: "member",
-  Membership: "membership",
-  AddOnService: "addOnService"
-};
-
-const sequelize = new Sequelize(config.DB, config.USER, config.PASSWORD, {
-  host: config.HOST,
-  port: config.PORT,
-  dialect: config.dialect,
-  pool: config.pool,
-  logging: Boolean(config.logging),
-  retry: config.retry,
-});
-
+const Membership = require('./Membership')(connection, Sequelize);
+const AddOnService = require('./AddOnService')(connection, Sequelize);
+const Invoice = require('./Invoice')(connection, Sequelize);
 
 const models = {
-  Sequelize,
-  sequelize,
+    Membership,
+    AddOnService,
+    Invoice,
 };
 
-const __loadModels = () => {
-  for (const key of Object.keys(__models)) {
-    models[key] = require(`./${__models[key]}.js`)(sequelize, Sequelize);
-  }
+Object.keys(models).forEach((modelName) => {
+    if ('associate' in models[modelName]) {
+        models[modelName].associate(models);
+    }
+});
+
+const syncModels = async () => {
+    await connection.sync({ force: true });
+    console.log("All models were synchronized successfully.");
 };
 
-__loadModels();
+syncModels();
 
-models.Membership.belongsTo(models.Member, { foreignKey: "member" });
-models.Member.hasMany(models.Membership, { foreignKey: "member" });
-models.Member.hasMany(models.AddOnService);
-models.AddOnService.belongsTo(models.Member);
 module.exports = models;

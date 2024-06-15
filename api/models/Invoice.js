@@ -1,41 +1,32 @@
+const { customAlphabet } = require("nanoid");
+const nanoid = customAlphabet('0123456789AQWXSCZEDCVFRTGBHYNJUIKLOPaqwxszedcvfrtgbnhyujmkiolp', 17);
 
 module.exports = (connection, Sequelize) => {
     const schema = {
-        membershipId: {
+        invoiceId: {
             type: Sequelize.STRING,
+            defaultValue: () => 'inv_' + nanoid(),
             primaryKey: true,
         },
-        firstName: {
+        membershipId: {
             type: Sequelize.STRING,
             allowNull: false,
+            references: {
+                model: 'Memberships',
+                key: 'membershipId',
+            },
         },
-        lastName: {
-            type: Sequelize.STRING,
-            allowNull: false,
-        },
-        membershipType: {
-            type: Sequelize.STRING,
-            allowNull: false,
-        },
-        startDate: {
+        invoiceDateTime: {
             type: Sequelize.DATE,
             allowNull: false,
-        },
-        dueDate: {
-            type: Sequelize.DATE,
-            allowNull: true,
         },
         totalAmount: {
             type: Sequelize.FLOAT,
             allowNull: false,
         },
-        email: {
+        invoiceUID: {
             type: Sequelize.STRING,
             allowNull: false,
-        },
-        isFirstMonth: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: true,
         },
         created_at: {
             type: Sequelize.DATE,
@@ -48,12 +39,11 @@ module.exports = (connection, Sequelize) => {
           },
     };
 
-    const Membership = connection.define('Membership', schema, { timestamps: false });
-    
-    Membership.associate = (models) => {
-        Membership.hasMany(models.AddOnService, { foreignKey: 'membershipId' });
-        Membership.hasMany(models.Invoice, { foreignKey: 'membershipId' });
+    const Invoice = connection.define('Invoice', schema, { timestamps: false });
+
+    Invoice.associate = (models) => {
+        Invoice.belongsTo(models.Membership, { foreignKey: 'membershipId' });
     };
 
-    return Membership;
+    return Invoice;
 };
