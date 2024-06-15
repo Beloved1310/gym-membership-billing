@@ -11,14 +11,27 @@ const gymServices = {
     "Pilates": 60,
     "Child Care": 45,
     "Tanning": 35
-  };
+};
+
 class AddOnServiceService {
     async createAddOnService(data) {
-        let dueDate = new Date(data.startDate);
-        data.monthlyAmount = gymServices[data.serviceName];
-        data.dueDate = dueDate.setMonth(dueDate.getMonth() + 1);
-        const addOnService = await addOnServiceRepository.create(data);
-        return addOnService
+        try {
+            // Validate service name
+            if (!gymServices[data.serviceName]) {
+                throw new Error(`Service ${data.serviceName} is not a valid gym service.`);
+            }
+            
+            let dueDate = new Date(data.startDate);
+            data.monthlyAmount = gymServices[data.serviceName];
+            data.dueDate = dueDate.setMonth(dueDate.getMonth() + 1);
+            
+            // Create the add-on service
+            const addOnService = await addOnServiceRepository.create(data);
+            return addOnService;
+        } catch (error) {
+            console.error('Error creating add-on service:', error);
+            throw error; // Re-throw the error after logging it
+        }
     }
 }
 
