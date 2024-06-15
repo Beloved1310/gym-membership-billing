@@ -1,62 +1,60 @@
-const { Membership, AddOnService, Invoice } = require("../models/index");
-const nodemailer = require("nodemailer");
-const Sequelize = require("sequelize");
-require("dotenv").config();
-
+// cron/membershipCron.js
+const cron = require('node-cron');
+const { Membership, Invoice, AddOnService } = require('../models/index');
+const nodemailer = require('nodemailer');
 const myemail = process.env.SENDER_EMAIL;
 const mypassword = process.env.GOGGLE_PASS_KEY;
-
-// Configure nodemailer with your Gmail SMTP settings
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: myemail,
-    pass: mypassword,
-  },
+    service: 'gmail',
+    auth: {
+        user: myemail,
+        pass:mypassword
+    }
 });
 
-const checkMemberships = async () => {
-  const now = new Date();
-
-  // Check for memberships with upcoming due dates
-  const memberships = await Membership.findAll({
-    where: {
-      dueDate: {
-        [Sequelize.Op.lte]: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
-      },
-      isFirstMonth: true,
-    },
-  });
-
-  for (const membership of memberships) {
-    const addOnServices = await AddOnService.findAll({
-      where: { membershipId: membership.membershipId },
-    });
-    const totalAddOnAmount = addOnServices.reduce(
-      (sum, service) => sum + service.monthlyAmount,
-      0
-    );
-    const totalAmount = membership.totalAmount + totalAddOnAmount;
-
-    // Send email reminder
+const sendReminderEmail = (email, subject, body) => {
     const mailOptions = {
-      from: myemail,
-      to: membership.email,
-      subject: `Fitness+ Membership Reminder - ${membership.membershipType}`,
-      text: `Dear ${membership.firstName},\n\nThis is a reminder for your upcoming membership payment. The total amount due is $${totalAmount}.\n\nBest regards,\nFitness+ Team`,
+        from: myemail,
+        to: email,
+        subject: subject,
+        text: body
     };
-
     transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error("Error sending email:", error);
-      } else {
-        console.log("Email sent:", info.response);
-      }
+        if (error) {
+            return console.log(error);
+        }
+        console.log('Email sent: ' + info.response);
     });
-
-    // Update isFirstMonth flag
-    await membership.update({ isFirstMonth: false });
-  }
 };
+
+const checkMemberships = async () => {
+    const today = new Date();
+
+    // Query for memberships due soon
+    const memberships = await Membership.findAll();
+    memberships.forEach(async (membership) => {
+        if (membership.isFirstMonth) {
+            const reminderDate = new Date(membership.dueDate);
+            reminderDate.setDate(reminderDate.getDate() - 7);
+            if (today >= reminderDate) {
+                const addOnServices = await AddOnService.findAll({ where: { membershipId: membership.membershipId } });
+                const totalAmount = membership.totalAmount + addOnServices.reduce((sum, service) => sum + service.monthlyAmount, 0);
+                const body = `Reminder for ${membership.membershipType}. Total amount: ${totalAmount}. Due on: ${membership.dueDate}`;
+                sendReminderEmail(membership.email, `Fitness+ Membership Reminder - ${membership.membershipType}`, body);
+            }
+        } else {
+            const addOnServices = await AddOnService.findAll({ where: { membershipId: membership.membershipId } });
+            addOnServices.forEach((service) => {
+                const monthlyDueDate = new Date(membership.monthlyDueDate);
+                if (today.getDate() === monthlyDueDate.getDate()) {
+                    const body = `Reminder for ${service.serviceName}. Monthly amount: ${service.monthlyAmount}.`;
+                    sendReminderEmail(membership.email, `Fitness+ Add-on Service Reminder - ${service.serviceName}`, body);
+                }
+            });
+        }
+    });
+};
+
+cron.schedule('0 0 * * *', checkMemberships);
 
 module.exports = checkMemberships;

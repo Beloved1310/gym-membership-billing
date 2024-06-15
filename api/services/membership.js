@@ -1,6 +1,7 @@
 const membershipRepository = require("../repository/membership");
 const addOnService = require("./addOnService");
 const AddOnServiceService = require("./addOnService");
+const InvoiceService = require("./invoice");
 
 const membershipAmount = {
   "Annual Basic": 500,
@@ -11,7 +12,9 @@ const membershipAmount = {
 
 class MembershipService {
   async createMembership(data) {
-    let dueDate = new Date();
+    const { serviceName: addOnServiceName } = data;
+    let startDate = new Date(data.startDate);
+    let dueDate = new Date(startDate);
     let amount = membershipAmount[data.membershipType];
 
     if (data.membershipType.startsWith("Annual")) {
@@ -21,20 +24,27 @@ class MembershipService {
     }
 
     data.dueDate = dueDate;
-    data.amount = amount;
+    data.totalAmount = amount;
 
-    console.log("Modified data:", data);
-    const member = await addOnServiceRepository.create(data);
+    const member = await membershipRepository.createMembership(data);
     if (addOnService) {
       const addServiceData = {
-        serviceName: data.serviceName,
-        membershipId: member.id,
+        serviceName: addOnServiceName,
+        membershipId: member.membershipId,
+       startDate
       };
       await AddOnServiceService.createAddOnService(addServiceData);
+      data.amount = data.totalAmount + addOnService.monthlyAmount;
     }
+    await InvoiceService.createInvoice({
+      membershipId: member.membershipId,
+      invoiceDateTime: dueDate,
+      totalAmount: data.amount,
+      invoiceUID: "https://lovecrewar.best/product_details/28927099.html"
+    });
+    return member
   }
 
-//  createInvoice
 }
 
 module.exports = new MembershipService();

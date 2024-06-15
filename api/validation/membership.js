@@ -17,9 +17,10 @@ const gymServices = [
   create: Joi.object({
     firstName: Joi.string().min(2).max(50).required(),
     lastName: Joi.string().min(2).max(50).required(),
-    membershipType: Joi.string().valid('Annual Basic', 'Monthly Premium', "Annual Premium", "Annual Basic" ).required(),  
+    membershipType: Joi.string().valid('Annual Basic', 'Monthly Premium', "Annual Premium", "Monthly Basic" ).required(),  
     email: Joi.string().email().required(),
     isFirstMonth: Joi.boolean().optional(),
+    startDate: Joi.string().required(),
     addOnService: Joi.boolean().required(),
     serviceName: Joi.string().valid(...gymServices).when('addOnService', {
       is: true,

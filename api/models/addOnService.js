@@ -1,7 +1,12 @@
+const { customAlphabet } = require("nanoid");
+const nanoid = customAlphabet('0123456789AQWXSCZEDCVFRTGBHYNJUIKLOPaqwxszedcvfrtgbnhyujmkiolp', 17);
+
+
 module.exports = (connection, Sequelize) => {
   const schema = {
     addOnId: {
       type: Sequelize.STRING,
+      defaultValue: () => 'add_' + nanoid(),
       primaryKey: true,
     },
     membershipId: {

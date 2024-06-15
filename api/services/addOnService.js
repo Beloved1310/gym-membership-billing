@@ -14,14 +14,12 @@ const gymServices = {
   };
 class AddOnServiceService {
     async createAddOnService(data) {
-        const dueDate = new Date()
-        data.serviceName = gymServices[data.service];
+        let dueDate = new Date(data.startDate);
+        data.monthlyAmount = gymServices[data.serviceName];
         data.dueDate = dueDate.setMonth(dueDate.getMonth() + 1);
-        return await addOnServiceRepository.create(data);
-        // create Invoice
+        const addOnService = await addOnServiceRepository.create(data);
+        return addOnService
     }
-
-    // Add other business logic methods if needed 
 }
 
 module.exports = new AddOnServiceService();

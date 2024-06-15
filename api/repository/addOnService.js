@@ -1,4 +1,4 @@
-const { Membership } = require('../models/index');
+const { AddOnService } = require('../models/index');
 
 class AddOnServiceRepository {
     async create(data) {

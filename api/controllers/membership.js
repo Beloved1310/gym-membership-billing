@@ -8,7 +8,6 @@ class MembershipController {
         const membership = await membershipService.createMembership(value);
         res.status(201).send(membership);
     }
-
 }
 
 module.exports = new MembershipController();

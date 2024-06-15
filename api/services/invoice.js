@@ -1,4 +1,4 @@
-const invoiceRepository = require('../models/invoiceRepository');
+const invoiceRepository = require('../repository/invoice');
 
 class InvoiceService {
     async createInvoice(data) {
